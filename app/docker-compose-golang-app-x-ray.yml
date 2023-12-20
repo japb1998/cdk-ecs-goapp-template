@@ -1,0 +1,36 @@
+version: "3.7"
+services:
+  app:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    depends_on:
+      - otel
+    environment:
+      LISTEN_ADDRESS: 0.0.0.0:8080
+      OTEL_RESOURCE_ATTRIBUTES: service.name=sample-service
+      OTEL_SERVICE_NAME: sample-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel:4317
+      XRAY_ENDPOINT: http://otel:2000
+      OTEL_JAVAAGENT_DEBUG: true
+      OTEL_METRICS_EXPORTER: otlp
+    env_file:
+      - .env
+    ports:
+      - '8080:8080'
+  otel:
+    image: amazon/aws-otel-collector:latest
+    command: --config /etc/ecs/ecs-default-config.yaml
+    environment:
+      - AWS_REGION=us-east-1
+    env_file:
+      - .env
+    volumes:
+      - .:/config
+      - /tmp/awscreds:/tmp/awscreds
+    ports:
+      - '4317:4317'
+      - '2000:2000'
+
+
+
